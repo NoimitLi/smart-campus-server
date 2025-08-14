@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "adminServer.apps.AdminserverConfig",
-    "StudentServer.apps.StudentserverConfig"
+    "StudentServer.apps.StudentserverConfig",
+    "authSystem.apps.AuthsystemConfig"
 ]
 
 MIDDLEWARE = [
