@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -48,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'middleware.auth_middleware.TokenAuthMiddleware'
 ]
 
 ROOT_URLCONF = 'SmartCampusServer.urls'
@@ -84,6 +86,22 @@ DATABASES = {
         'PASSWORD': '123456',  # 数据库密码
     }
 }
+# 配置redis缓存
+# Redis的基本配置
+REDIS_HOST = '192.168.72.129'
+REDIS_PORT = 6379
+REDIS_DB = 0
+# 配置Django缓存后端为Redis
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f'redis://{REDIS_HOST}:{REDIS_PORT}',
+        'KEY_PREFIX': '',  # 关键设置
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -102,17 +120,21 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+# 配置自定义认证，不使用django的默认auth_user表
+AUTHENTICATION_BACKENDS = [
+    # 'django.contrib.auth.backends.ModelBackend',  # 默认的认证后端
+    'authSystem.backends.CustomAuthBackend',  # 自定义的认证后端
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
+"""该中国时区"""
+LANGUAGE_CODE = 'zh-hans'
+TIME_ZONE = 'Asia/Shanghai'
+USE_TZ = False
 
 USE_I18N = True
-
-USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -123,3 +145,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MEDIA_URL = '/media/'  # 访问媒体文件的 URL 前缀
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # 本地存储路径
