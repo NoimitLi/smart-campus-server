@@ -1,16 +1,16 @@
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, ListModelMixin
+from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.request import Request
 from rest_framework.generics import GenericAPIView
 from .serializers import RegisterSerializer, LoginSerializer, TreeMenuSerializer, UserDetailSerializer
 from authSystem.controller.auth_controller import AuthController
-from core.exceptions import APIError
 from authSystem.services.sms import SmsService
+from core.exceptions import APIError
 from utils.rules import phone_validator
 from .models import MenuModel, RoleMenuModel, UserModel
-from django.shortcuts import get_object_or_404
 
 
 # Create your views here.

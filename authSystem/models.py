@@ -37,8 +37,8 @@ class BaseModel(models.Model):
 class RoleModel(BaseModel):
     """角色表"""
     id = models.AutoField(primary_key=True, verbose_name="角色ID")
-    name = models.CharField(max_length=32, verbose_name="角色名称", null=False)
-    code = models.CharField(max_length=32, verbose_name="角色编码")
+    name = models.CharField(max_length=32, verbose_name="角色名称", null=False, blank=False, unique=True)
+    code = models.CharField(max_length=32, verbose_name="角色编码", null=False, blank=False, unique=True)
     status = models.BooleanField(default=True, verbose_name="状态")
     description = models.TextField(verbose_name="描述")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间", null=False)
