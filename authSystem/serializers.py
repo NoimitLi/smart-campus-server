@@ -113,6 +113,7 @@ class TreeMenuSerializer(serializers.ModelSerializer):
                   'children']
 
     def get_children(self, obj):
+        """动态决定children值"""
         if obj.children.exists():
             return TreeMenuSerializer(obj.children.all(), many=True).data
         return []

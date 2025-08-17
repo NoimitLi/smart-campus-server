@@ -1,37 +1,6 @@
 from django.db import models
-from django.db.models import DateTimeField, ManyToManyField
-from mptt.models import MPTTModel, TreeForeignKey
+from Base.Model import BaseModel
 from utils.encrypt import AESHelper
-
-
-class BaseModel(models.Model):
-    """模型基类"""
-    create_time = models.DateTimeField(auto_now_add=True, verbose_name="创建时间", null=False)
-
-    class Meta:
-        abstract = True  # 抽象基类
-
-    def to_dict(self, fields=None, exclude=None):
-        """转为字典"""
-        data = {}
-        for f in self._meta.concrete_fields + self._meta.many_to_many:
-            value = f.value_from_object(self)
-
-            if fields and f.name not in fields:
-                continue
-
-            if exclude and f.name in exclude:
-                continue
-
-            if isinstance(f, ManyToManyField):
-                value = [i.id for i in value] if self.pk else None
-
-            if isinstance(f, DateTimeField):
-                value = value.strftime('%Y-%m-%d %H:%M:%S') if value else None
-
-            data[f.name] = value
-
-        return data
 
 
 class RoleModel(BaseModel):
@@ -121,12 +90,12 @@ class MenuModel(BaseModel):
     order = models.IntegerField(default=0, verbose_name="排序权重")
     type = models.IntegerField(choices=MENU_TYPE_CHOICES, default=0, verbose_name="类型")
     visible = models.BooleanField(default=True, verbose_name="是否可见")
-    parent = TreeForeignKey(
+    parent = models.ForeignKey(
         to='self',
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='children',
+        related_name='children',  # 反向查询，后续序列化中通过这个字段动态生成children数组
         verbose_name="父菜单"
     )
 
@@ -134,8 +103,8 @@ class MenuModel(BaseModel):
         db_table = "system_menu"
         ordering = ['order']
 
-    class MPTTMeta:
-        order_insertion_by = ['order']  # 插入时自动排序
+    # class MPTTMeta:
+    #     order_insertion_by = ['order']  # 插入时自动排序
 
     def __str__(self):
         return f"{self.name}({self.get_type_display()})"
