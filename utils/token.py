@@ -4,15 +4,19 @@ from .generate import generate_random_str
 from typing import Optional
 
 SECRET_KEY = 'jwt-secret-key'
-EXPIRE_TIME = 36000  # 默认过期时间
+EXPIRE_TIME = 3600  # 默认过期时间
 
 
-def generate_token(data: dict) -> str:
+def generate_token(data: dict, expire=EXPIRE_TIME) -> str:
     """生成token"""
+    if isinstance(expire, timedelta):
+        expire = expire.seconds
+    exp = datetime.now() + timedelta(seconds=expire)
+
     payload = {
         'data': data,
-        'exp': datetime.utcnow() + timedelta(seconds=EXPIRE_TIME),
-        'iv': generate_random_str(32)
+        'exp': exp,
+        # 'signature': generate_random_str(32)
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
     return token

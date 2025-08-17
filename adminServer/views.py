@@ -101,3 +101,7 @@ class RoleViewSet(viewsets.ViewSet):
         # 删除角色
         role.delete()
         return APIResponse(msg='删除成功')
+
+
+class DepartmentViewSet(viewsets.ViewSet):
+    pass

@@ -2,7 +2,7 @@
 在settings.py中配置AUTHENTICATION_BACKENDS
 """
 from django.contrib.auth.backends import ModelBackend
-from .models import UserModel, UserRoleModel, RolePermissionModel
+from .models import UserModel
 from django.db.models import Q
 
 
@@ -23,7 +23,7 @@ class CustomAuthBackend(ModelBackend):
             else:
                 return None
             # 更新最后登录时间
-            user.save(update_fields=['last_login_time'])
+            # user.save(update_fields=['last_login_time'])
             return user
         except UserModel.DoesNotExist:
             return None

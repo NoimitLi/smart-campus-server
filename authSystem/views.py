@@ -1,4 +1,3 @@
-from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.views import APIView
@@ -8,8 +7,9 @@ from rest_framework.generics import GenericAPIView
 from .serializers import RegisterSerializer, LoginSerializer, TreeMenuSerializer, UserDetailSerializer
 from authSystem.controller.auth_controller import AuthController
 from authSystem.services.sms import SmsService
-from core.exceptions import APIError
+from core.exceptions import APIError, AuthFailed
 from utils.rules import phone_validator
+from Base.Response import APIResponse
 from .models import MenuModel, RoleMenuModel, UserModel
 
 
@@ -28,73 +28,106 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request_data)
         # 校验
         if not serializer.is_valid():
-            return JsonResponse({
-                'code': 400,
-                'message': '注册失败',
-                'errors': serializer.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return APIResponse(
+                data=serializer.errors,
+                msg='注册失败',
+                status=status.HTTP_400_BAD_REQUEST
+            )
         # 保存数据
         serializer.save()
         # TODO: 返回结果
-        return JsonResponse({'code': 200, 'message': '注册成功'})
+        return APIResponse(msg='注册成功')
 
 
 class SendCode(APIView):
     def get(self, request, phone: str):
         """发送验证码"""
         if not phone_validator(phone):
-            return JsonResponse({
-                'code': 400,
-                'message': '手机号格式不正确！'
-            })
+            return APIResponse(msg='手机号格式不正确！', status=status.HTTP_400_BAD_REQUEST)
         SmsService().send_sms_code(phone)
-        return JsonResponse({
-            'code': 200,
-            'message': 'success!'
-        })
+        return APIResponse()
 
 
 class LoginView(APIView):
-    def post(self, request, *args, **kwargs):
-        """登陆"""
-        try:
-            # 序列化数据
-            serializer = LoginSerializer(data=request.data)
-            if not serializer.is_valid():
-                return JsonResponse({
-                    'code': 400,
-                    'message': serializer.errors
-                }, status=status.HTTP_400_BAD_REQUEST)
+    """登录接口 - 优化版"""
 
-            # 处理登陆
+    def post(self, request, *args, **kwargs):
+        try:
+            serializer = LoginSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
             controller = AuthController()
             result = controller.login(serializer.validated_data)
-            result['avatar'] = request.build_absolute_uri(result.get('avatar'))
-            # 序列化user
-            # 返回结果
-            response = JsonResponse({
-                'code': 200,
-                'data': result
-            })
 
-            # 设置安全Cookie
-            # set_auth_cookie(
-            #     response=response,
-            #     token=result.get('token'),
-            #     remember_me=serializer.validated_data.get('remember_me', False)
-            # )
+            # 处理头像URL
+            if result['user'].get('avatar'):
+                result['user']['avatar'] = request.build_absolute_uri(result['user']['avatar'])
+
+            # 设置HttpOnly Cookie存储refresh_token
+            response = APIResponse({
+                'user': result['user'],
+                'access_token': result['access_token']
+            }, status=status.HTTP_200_OK)
+
+            response.set_cookie(
+                key='refresh_token',
+                value=result['refresh_token'],
+                max_age=int(AuthController.REFRESH_TOKEN_EXPIRE.total_seconds()),
+                httponly=True,
+                secure=request.is_secure(),  # 生产环境应为True
+                samesite='Lax',
+                path='/auth/refresh'  # 限制Cookie只发送到刷新接口
+            )
+
             return response
 
         except APIError as e:
-            return JsonResponse({
-                'code': e.code,
-                'message': e.message
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return APIResponse(code=e.code, msg=e.message, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TokenRefreshView(APIView):
+    """Token刷新接口"""
+
+    def post(self, request, *args, **kwargs):
+        try:
+            refresh_token = request.COOKIES.get('refresh_token')
+            if not refresh_token:
+                raise AuthFailed('缺少Refresh Token')
+
+            controller = AuthController()
+            result = controller.refresh_token(refresh_token)
+
+            response = APIResponse({
+                'access_token': result['access_token']
+            })
+
+            # 返回新的access_token
+            return response
+
+        except APIError as e:
+            return APIResponse(code=e.code, msg=e.message, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class LogoutView(APIView):
+    """登出接口"""
+
     def post(self, request, *args, **kwargs):
-        return JsonResponse({'code': 200, 'message': '登出成功'})
+        try:
+            payload = request.payload
+            if payload.get('token_type') != 'access':
+                raise AuthFailed('无效的Token类型')
+
+            # 执行登出逻辑
+            controller = AuthController()
+            controller.logout(payload['user_id'])
+
+            # 清除Cookie
+            response = APIResponse(msg='登出成功')
+            response.delete_cookie('refresh_token')
+            return response
+
+        except APIError as e:
+            return APIResponse(code=e.code, msg=e.message, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MenuView(APIView):
@@ -112,18 +145,10 @@ class MenuView(APIView):
             ).order_by('order')
 
             serializer = TreeMenuSerializer(menus, many=True)
-            return JsonResponse({
-                'code': 200,
-                'message': '成功获取菜单',
-                'data': serializer.data
-            })
+            return APIResponse(data=serializer.data, msg='成功获取菜单')
 
-        except Exception as e:
-            return JsonResponse({
-                'code': 500,
-                'message': '获取菜单失败',
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except APIError as e:
+            return APIResponse(code=e.code, msg='获取菜单失败', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class MineView(GenericAPIView, RetrieveModelMixin):
@@ -134,16 +159,9 @@ class MineView(GenericAPIView, RetrieveModelMixin):
         """获取个人中心信息"""
         user = get_object_or_404(UserModel, id=request.user_id)
         if not user:
-            return JsonResponse({
-                'code': 400,
-                'message': '获取用户信息失败!',
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return APIResponse(msg='获取用户信息失败!', status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(user)
-        return JsonResponse({
-            'code': 200,
-            'message': 'success',
-            'data': serializer.data
-        })
+        return APIResponse(data=serializer.data)
 
     def get_serializer_context(self):
         """添加request到serializer context"""
