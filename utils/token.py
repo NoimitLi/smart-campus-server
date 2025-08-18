@@ -10,13 +10,11 @@ EXPIRE_TIME = 3600  # 默认过期时间
 def generate_token(data: dict, expire=EXPIRE_TIME) -> str:
     """生成token"""
     if isinstance(expire, timedelta):
-        expire = expire.seconds
-    exp = datetime.now() + timedelta(seconds=expire)
+        expire = int(expire.total_seconds())  # 确保转换为秒数
 
     payload = {
         'data': data,
-        'exp': exp,
-        # 'signature': generate_random_str(32)
+        'exp': datetime.utcnow() + timedelta(seconds=expire)  # 使用UTC时间
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
     return token

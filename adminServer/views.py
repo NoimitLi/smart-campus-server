@@ -1,9 +1,9 @@
 from rest_framework import viewsets, status
-from authSystem.models import RoleModel
+from authSystem.models import RoleModel, UserModel
 from .models import DepartmentModel
 from Base.Response import APIResponse
 from Base.Pagination import CustomPagination
-from .serializers import RoleSerializer, DepartmentSerializer
+from .serializers import RoleSerializer, DepartmentSerializer, UserSerializer
 
 
 class RoleViewSet(viewsets.ViewSet):
@@ -188,4 +188,90 @@ class DepartmentViewSet(viewsets.ViewSet):
 
         # 删除部门
         dept.delete()
+        return APIResponse(msg='删除成功')
+
+
+class UserViewSet(viewsets.ViewSet):
+    """
+    用户管理
+    """
+    # 分页
+    pagination_class = CustomPagination
+
+    def list(self, request):
+        """对应 GET /user - 获取所有用户"""
+        queryset = UserModel.objects.all().order_by('id')  # 添加排序以避免分页警告
+        # 获取分页实例
+        paginator = self.pagination_class()
+        # 对查询集进行分页
+        page = paginator.paginate_queryset(queryset, request)
+        if not page:
+            return paginator.get_paginated_response(None)
+
+        # 如果没有分页，返回全部
+        serializer = UserSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+    def create(self, request):
+        """对应 POST /user - 添加新用户"""
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return APIResponse(serializer.data)
+        return APIResponse(data=serializer.errors, msg='创建失败', status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk=None):
+        """
+        获取单个用户详情
+        GET /user/:id
+        """
+        try:
+            user = UserModel.objects.get(pk=pk)
+        except UserModel.DoesNotExist:
+            return APIResponse(msg='用户不存在', status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserSerializer(user)
+        return APIResponse(serializer.data)
+
+    def update(self, request, pk=None):
+        """对应 PUT /user/:id - 更新用户信息"""
+        try:
+            user = UserModel.objects.get(pk=pk)
+        except UserModel.DoesNotExist:
+            return APIResponse(msg="用户不存在", status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return APIResponse(serializer.data)
+        return APIResponse(data=serializer.errors, msg='修改失败', status=status.HTTP_400_BAD_REQUEST)
+
+    def partial_update(self, request, pk=None):
+        """对应 PATCH /user/:id - 更新用户状态"""
+        if 'status' not in request.data:
+            return APIResponse(msg='缺少状态字段', status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = UserModel.objects.get(pk=pk)
+        except UserModel.DoesNotExist:
+            return APIResponse(msg="用户不存在", status=status.HTTP_404_NOT_FOUND)
+
+        # 只更新状态字段
+        # partial=True 将所有反序列化字段设置为False
+        serializer = UserSerializer(user, data={'status': request.data.get('status')}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return APIResponse(serializer.data)
+        return APIResponse(data=serializer.errors, msg='修改失败', status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        """
+        对应 DELETE /user/:id - 删除用户
+        """
+        try:
+            user = UserModel.objects.get(pk=pk)
+        except UserModel.DoesNotExist:
+            return APIResponse(msg="用户不存在", status=status.HTTP_404_NOT_FOUND)
+
+        # 删除部门
+        user.delete()
         return APIResponse(msg='删除成功')
