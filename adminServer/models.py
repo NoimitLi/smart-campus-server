@@ -86,7 +86,7 @@ class DepartmentModel(BaseModel):
         return " / ".join(path_parts)
 
 
-class UserDepartment(BaseModel):
+class UserDepartmentModel(BaseModel):
     """用户-部门关联模型"""
 
     class Meta:
@@ -116,7 +116,7 @@ class UserDepartment(BaseModel):
         """保存时自动设置主部门"""
         if self.is_primary:
             # 取消该用户的其他主部门设置
-            UserDepartment.objects.filter(
+            UserDepartmentModel.objects.filter(
                 user=self.user,
                 is_primary=True
             ).exclude(id=self.id).update(is_primary=False)

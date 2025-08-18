@@ -19,7 +19,8 @@ class CustomPagination(PageNumberPagination):
     def get_paginated_response(self, data):
         """重写响应格式"""
         if data is None:
-            return APIResponse(data=None, code=400, msg="请求的页码不存在或无效", status=status.HTTP_400_BAD_REQUEST)
+            return APIResponse(data=None, code=404, msg='数据不存在', status=status.HTTP_404_NOT_FOUND)
+            # return APIResponse(data=None, code=400, msg="请求的页码不存在或无效", status=status.HTTP_400_BAD_REQUEST)
         return APIResponse({
             'total': self.page.paginator.count,
             'page_num': self.page.number,

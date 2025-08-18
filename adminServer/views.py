@@ -1,9 +1,15 @@
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from authSystem.models import RoleModel, UserModel
 from .models import DepartmentModel
 from Base.Response import APIResponse
 from Base.Pagination import CustomPagination
 from .serializers import RoleSerializer, DepartmentSerializer, UserSerializer
+from django.db import models
+
+
+class BaseViewSet(viewsets.ViewSet):
+    pass
 
 
 class RoleViewSet(viewsets.ViewSet):
@@ -198,9 +204,37 @@ class UserViewSet(viewsets.ViewSet):
     # 分页
     pagination_class = CustomPagination
 
+    # 认证
+    # authentication_classes =
+    # 授权
+    # permission_classes =
+    # 限流
+    # throttle_classes =
     def list(self, request):
-        """对应 GET /user - 获取所有用户"""
+        """对应 GET /user - 获取所有用户，包含搜索"""
+        if request.role_id != 1:
+            return APIResponse(msg='非管理员无权查询用户', status=status.HTTP_401_UNAUTHORIZED)
+
+        username = request.query_params.get('username')
+        phone = request.query_params.get('phone')
+        user_status = request.query_params.get('status')
+        department = request.query_params.get('department')
+
         queryset = UserModel.objects.all().order_by('id')  # 添加排序以避免分页警告
+        # 应用过滤条件
+        if username:
+            queryset = queryset.filter(username__icontains=username)
+        if phone:
+            queryset = queryset.filter(phone__icontains=phone)
+        if user_status:
+            try:
+                status_bool = user_status.lower() == 'true'
+                queryset = queryset.filter(status=status_bool)
+            except ValueError:
+                pass
+        if department:
+            queryset = queryset.filter(models.Q(department_relations__department__id=department))
+
         # 获取分页实例
         paginator = self.pagination_class()
         # 对查询集进行分页
@@ -214,10 +248,14 @@ class UserViewSet(viewsets.ViewSet):
 
     def create(self, request):
         """对应 POST /user - 添加新用户"""
-        serializer = UserSerializer(data=request.data)
+        if request.role_id != 1:
+            return APIResponse(msg='非管理员无权创建用户', status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = UserSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return APIResponse(serializer.data)
+
         return APIResponse(data=serializer.errors, msg='创建失败', status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, pk=None):
@@ -225,6 +263,8 @@ class UserViewSet(viewsets.ViewSet):
         获取单个用户详情
         GET /user/:id
         """
+        if request.role_id != 1:
+            return APIResponse(msg='非管理员无权查询用户', status=status.HTTP_401_UNAUTHORIZED)
         try:
             user = UserModel.objects.get(pk=pk)
         except UserModel.DoesNotExist:
@@ -235,26 +275,33 @@ class UserViewSet(viewsets.ViewSet):
 
     def update(self, request, pk=None):
         """对应 PUT /user/:id - 更新用户信息"""
+        if request.role_id != 1:
+            return APIResponse(msg='非管理员无权修改用户', status=status.HTTP_401_UNAUTHORIZED)
         try:
             user = UserModel.objects.get(pk=pk)
         except UserModel.DoesNotExist:
             return APIResponse(msg="用户不存在", status=status.HTTP_404_NOT_FOUND)
 
-        serializer = UserSerializer(user, data=request.data)
+        serializer = UserSerializer(user, data=request.data, context={'request': request}, partial=True)
         if serializer.is_valid():
             serializer.save()
             return APIResponse(serializer.data)
         return APIResponse(data=serializer.errors, msg='修改失败', status=status.HTTP_400_BAD_REQUEST)
 
-    def partial_update(self, request, pk=None):
-        """对应 PATCH /user/:id - 更新用户状态"""
+    @action(detail=True, methods=['put'])
+    # detail为True代表处理单个用户，pk从/user/20/status/获取。如果改为False，代表处理批量操作，pk从/user/status/?ids=1,2,3获取
+    def status(self, request, pk=None):
+        """对应 PUT /user/:id/status/ - 更新用户状态"""
         if 'status' not in request.data:
             return APIResponse(msg='缺少状态字段', status=status.HTTP_400_BAD_REQUEST)
+
         try:
             user = UserModel.objects.get(pk=pk)
         except UserModel.DoesNotExist:
             return APIResponse(msg="用户不存在", status=status.HTTP_404_NOT_FOUND)
-
+        # 非管理员不能修改管理员
+        if request.role_id != 1:
+            return APIResponse(msg="无权限修改管理员", status=status.HTTP_403_FORBIDDEN)
         # 只更新状态字段
         # partial=True 将所有反序列化字段设置为False
         serializer = UserSerializer(user, data={'status': request.data.get('status')}, partial=True)
@@ -262,6 +309,27 @@ class UserViewSet(viewsets.ViewSet):
             serializer.save()
             return APIResponse(serializer.data)
         return APIResponse(data=serializer.errors, msg='修改失败', status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['put'])
+    def password(self, request, pk=None):
+        """对应 PUT /user/:id/password/ - 更新用户密码"""
+        if 'password' not in request.data:
+            return APIResponse(msg='缺少密码字段', status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = UserModel.objects.get(pk=pk)
+        except UserModel.DoesNotExist:
+            return APIResponse(msg="用户不存在", status=status.HTTP_404_NOT_FOUND)
+        # 只更新状态字段
+        # partial=True 将所有反序列化字段设置为False
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return APIResponse(serializer.data)
+        return APIResponse(data=serializer.errors, msg='修改失败', status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['put'])
+    def avatar(self, request, pk=None):
+        pass
 
     def destroy(self, request, pk=None):
         """
@@ -272,6 +340,5 @@ class UserViewSet(viewsets.ViewSet):
         except UserModel.DoesNotExist:
             return APIResponse(msg="用户不存在", status=status.HTTP_404_NOT_FOUND)
 
-        # 删除部门
         user.delete()
         return APIResponse(msg='删除成功')

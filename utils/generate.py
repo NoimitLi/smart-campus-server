@@ -1,5 +1,7 @@
 import random
 
+ACCOUNT_PREV = 'sc-'
+
 
 def generate_random_str(length: int = 16, mixin: bool = True) -> str:
     """
@@ -11,3 +13,7 @@ def generate_random_str(length: int = 16, mixin: bool = True) -> str:
     """
     key = '1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ' if mixin else '1234567890'
     return ''.join(random.choices(key, k=length))
+
+
+def generate_random_account():
+    return ACCOUNT_PREV + generate_random_str()

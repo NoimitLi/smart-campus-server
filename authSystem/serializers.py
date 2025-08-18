@@ -3,6 +3,7 @@ from rest_framework.validators import UniqueValidator
 from .models import UserModel, UserRoleModel, RoleModel, MenuModel
 from utils.encrypt import AESHelper
 from utils.rules import phone_validator
+from utils.generate import generate_random_account
 
 aes_helper = AESHelper()
 
@@ -40,6 +41,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         }
 
     def validate_confirm_password(self, value):
+        if not value:
+            raise serializers.ValidationError({
+                'password': '确认密码是必填项'
+            })
         if value != self.initial_data.get('password'):
             raise serializers.ValidationError("两次密码不一致")
         return value
@@ -49,8 +54,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop('confirm_password')
         # 对密码进行加密处理
         validated_data['password'] = aes_helper.aes_encrypt(validated_data['password'])
-        # 将账号默认初始化为用户名
-        validated_data['account'] = validated_data['username']
+        # 添加默认账号和昵称
+        if not validated_data.get('account'):
+            validated_data['account'] = generate_random_account()
+        if not validated_data.get('nickname'):
+            validated_data['nickname'] = generate_random_account()
         # 创建用户
         user = UserModel.objects.create(**validated_data)
         # 添加默认角色
