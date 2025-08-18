@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'rest_framework',
     "adminServer.apps.AdminserverConfig",
     "StudentServer.apps.StudentserverConfig",
-    "authSystem.apps.AuthsystemConfig"
+    "authSystem.apps.AuthsystemConfig",
+    "socketServer.apps.SocketserverConfig"
 ]
 
 MIDDLEWARE = [
