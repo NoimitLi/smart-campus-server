@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser, FormParser
 from authSystem.models import RoleModel, UserModel
 from .models import DepartmentModel
 from Base.Response import APIResponse
@@ -203,6 +204,8 @@ class UserViewSet(viewsets.ViewSet):
     """
     # 分页
     pagination_class = CustomPagination
+    # 文件解析器
+    parser_classes = [MultiPartParser, FormParser]
 
     # 认证
     # authentication_classes =
@@ -212,9 +215,6 @@ class UserViewSet(viewsets.ViewSet):
     # throttle_classes =
     def list(self, request):
         """对应 GET /user - 获取所有用户，包含搜索"""
-        if request.role_id != 1:
-            return APIResponse(msg='非管理员无权查询用户', status=status.HTTP_401_UNAUTHORIZED)
-
         username = request.query_params.get('username')
         phone = request.query_params.get('phone')
         user_status = request.query_params.get('status')
@@ -274,7 +274,7 @@ class UserViewSet(viewsets.ViewSet):
         return APIResponse(serializer.data)
 
     def update(self, request, pk=None):
-        """对应 PUT /user/:id - 更新用户信息"""
+        """对应 PUT /user/:id - 更新用户信息,包括角色与部门"""
         if request.role_id != 1:
             return APIResponse(msg='非管理员无权修改用户', status=status.HTTP_401_UNAUTHORIZED)
         try:
@@ -329,7 +329,33 @@ class UserViewSet(viewsets.ViewSet):
 
     @action(detail=True, methods=['put'])
     def avatar(self, request, pk=None):
-        pass
+        """头像上传接口"""
+        try:
+            user = UserModel.objects.get(pk=pk)
+        except UserModel.DoesNotExist:
+            return APIResponse(msg="用户不存在", status=status.HTTP_404_NOT_FOUND)
+        serializer = UserSerializer(user, data=request.data, partial=True, context={'request': request})
+
+        # 检查是否有文件被上传
+        if 'avatar' not in request.FILES:
+            return APIResponse(
+                msg='请选择要上传的头像文件',
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if serializer.is_valid():
+            serializer.save()
+            # 返回完整的用户信息（包含新头像URL）
+            return APIResponse(
+                data=serializer.data,
+                msg='头像上传成功'
+            )
+
+        return APIResponse(
+            msg='头像上传失败',
+            data=serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     def destroy(self, request, pk=None):
         """

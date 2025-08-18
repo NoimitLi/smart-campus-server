@@ -4,15 +4,16 @@ from django.core.cache import cache
 from rest_framework import status
 from utils.token import verify_token
 
-WHITE_LIST = ['/auth/login', '/auth/register', '/auth/send_code', '/auth/refresh']
+WHITE_LIST = ['/auth/login', '/auth/register', '/auth/send_code', '/auth/refresh', '/media']
 
 
 class TokenAuthMiddleware(MiddlewareMixin):
     """token认证中间件"""
 
     def process_request(self, request: HttpRequest):
-        if request.path in WHITE_LIST:
-            return None
+        for i in WHITE_LIST:
+            if request.path.find(i):
+                return None
 
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
         if not auth_header.startswith('Bearer '):

@@ -1,3 +1,4 @@
+import os
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from django.core.validators import RegexValidator
@@ -104,7 +105,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()
     department = serializers.SerializerMethodField()
-    confirm_password = serializers.CharField(required=False,write_only=True)
+    confirm_password = serializers.CharField(required=False, write_only=True)
 
     class Meta:
         model = UserModel
@@ -166,6 +167,20 @@ class UserSerializer(serializers.ModelSerializer):
         except UserDepartmentModel.DoesNotExist:
             return None
 
+    def validate_avatar(self, value):
+        """验证头像文件"""
+        # 检查文件大小（限制为2MB）
+        if value.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError("头像文件大小不能超过2MB")
+
+        # 检查文件类型
+        valid_extensions = ['.jpg', '.jpeg', '.png', '.gif']
+        ext = os.path.splitext(value.name)[1].lower()
+        if ext not in valid_extensions:
+            raise serializers.ValidationError("不支持的文件类型，请上传jpg/png/gif格式图片")
+
+        return value
+
     def validate(self, attrs):
         return attrs
 
@@ -206,6 +221,15 @@ class UserSerializer(serializers.ModelSerializer):
         self.update_dept(user)
 
         return user
+
+    def to_representation(self, instance):
+        """hook获取data前的操作"""
+        ret = super().to_representation(instance)
+        # 将avatar转为完整的url
+        if ret['avatar']:
+            ret['avatar'] = self.context['request'].build_absolute_uri(ret['avatar'])
+            pass
+        return ret
 
     def update_role(self, user):
         """添加或更新角色"""
