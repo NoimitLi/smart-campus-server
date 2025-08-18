@@ -30,15 +30,20 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',  # ASGI 服务器
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'corsheaders',  # 跨域
     'drf_yasg',  # 生成接口文档
     'rest_framework',
+    'channels',  # websocket服务
+
     "adminServer.apps.AdminserverConfig",
     "StudentServer.apps.StudentserverConfig",
     "authSystem.apps.AuthsystemConfig",
@@ -77,6 +82,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'SmartCampusServer.wsgi.application'
+ASGI_APPLICATION = 'SmartCampusServer.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -106,6 +112,16 @@ CACHES = {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
     }
+}
+# Channels 层配置 (使用 Redis 作为后端)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(REDIS_HOST, REDIS_PORT)],  # 使用 Redis 容器名
+            "symmetric_encryption_keys": [SECRET_KEY],
+        },
+    },
 }
 
 # Password validation
