@@ -243,7 +243,7 @@ class UserViewSet(viewsets.ViewSet):
             return paginator.get_paginated_response(None)
 
         # 如果没有分页，返回全部
-        serializer = UserSerializer(page, many=True)
+        serializer = UserSerializer(page, many=True, context={'request': request})
         return paginator.get_paginated_response(serializer.data)
 
     def create(self, request):
@@ -270,7 +270,7 @@ class UserViewSet(viewsets.ViewSet):
         except UserModel.DoesNotExist:
             return APIResponse(msg='用户不存在', status=status.HTTP_404_NOT_FOUND)
 
-        serializer = UserSerializer(user)
+        serializer = UserSerializer(user, context={'request': request})
         return APIResponse(serializer.data)
 
     def update(self, request, pk=None):

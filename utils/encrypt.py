@@ -50,5 +50,5 @@ class AESHelper:
 
 if __name__ == '__main__':
     aes_helper = AESHelper()
-    print(aes_helper.aes_encrypt('123456'))
+    print(aes_helper.aes_encrypt('admin123'))
     print(aes_helper.aes_decrypt('3OPCgpNbf8jo3zzlkfT5ww=='))

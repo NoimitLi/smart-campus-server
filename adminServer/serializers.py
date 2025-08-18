@@ -6,6 +6,7 @@ from authSystem.models import RoleModel, UserModel, UserRoleModel
 from authSystem.serializers import RegisterSerializer
 from .models import DepartmentModel, UserDepartmentModel
 from utils.encrypt import AESHelper
+from utils.generate import generate_random_str
 
 aes_helper = AESHelper()
 
@@ -47,6 +48,14 @@ class RoleSerializer(serializers.ModelSerializer):
         # return RoleModel.objects.create(**validated_data)
         return super().create(validated_data)
 
+    def to_representation(self, instance):
+        """hook获取data前的操作"""
+        ret = super().to_representation(instance)
+        # 将avatar转为完整的url
+        if ret['status']:
+            ret['status'] = 1 if ret['status'] else 0
+        return ret
+
 
 class DepartmentSerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField()
@@ -64,6 +73,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
             'updated_time', 'create_time', 'children'
         ]
         extra_kwargs = {
+            'code': {'required': False},
             'parent': {'required': False},
             'order': {'required': False, 'default': 0},
             'status': {'required': False, 'default': True}
@@ -96,10 +106,19 @@ class DepartmentSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        validated_data['code'] = generate_random_str(length=8)
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
         return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        """hook获取data前的操作"""
+        ret = super().to_representation(instance)
+        # 将avatar转为完整的url
+        if ret['status']:
+            ret['status'] = 1 if ret['status'] else 0
+        return ret
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -226,9 +245,14 @@ class UserSerializer(serializers.ModelSerializer):
         """hook获取data前的操作"""
         ret = super().to_representation(instance)
         # 将avatar转为完整的url
-        if ret['avatar']:
-            ret['avatar'] = self.context['request'].build_absolute_uri(ret['avatar'])
-            pass
+        # if ret['avatar']:
+            # ret['avatar'] = self.context['request'].build_absolute_uri(ret['avatar'])
+        ret['avatar'] = {
+            'showAvatar': self.context['request'].build_absolute_uri(ret['avatar']) or None,
+            'fillAvatar': self.context['request'].build_absolute_uri(ret['avatar']) or None
+        }
+        if ret['status']:
+            ret['status'] = 1 if ret['status'] else 0
         return ret
 
     def update_role(self, user):

@@ -9,7 +9,7 @@ aes_helper = AESHelper()
 
 
 def password_validator(value):
-    if len(value) < 6:
+    if len(value) < 8:
         raise serializers.ValidationError("密码长度不能小于6位")
     return value
 
@@ -114,17 +114,49 @@ class LoginSerializer(serializers.Serializer):
 
 class TreeMenuSerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField()
+    meta = serializers.SerializerMethodField()
 
     class Meta:
         model = MenuModel
-        fields = ['id', 'name', 'code', 'path', 'component', 'title', 'icon', 'order', 'type', 'visible', 'parent',
-                  'children']
+        fields = ['path', 'name', 'component', 'meta', 'children']
+
+    def get_meta(self, obj):
+        """构造meta对象"""
+        return {
+            'title': obj.title or obj.name,
+            'icon': obj.icon,
+            'hidden': not obj.visible,
+            'sort': obj.order,
+            'type': obj.get_type_display()  # 添加菜单类型
+        }
 
     def get_children(self, obj):
-        """动态决定children值"""
+        """递归处理子菜单"""
         if obj.children.exists():
-            return TreeMenuSerializer(obj.children.all(), many=True).data
-        return []
+            return TreeMenuSerializer(
+                obj.children.all().order_by('order'),  # 按order字段排序
+                many=True,
+                context=self.context  # 传递上下文
+            ).data
+        return None  # 没有子菜单时返回None而不是空数组
+
+    def to_representation(self, instance):
+        """重写序列化输出"""
+        ret = super().to_representation(instance)
+
+        # # 处理component路径
+        # if ret['component']:
+        #     ret['component'] = f'@/views{ret["component"]}'
+
+        # 如果没有子菜单，移除children字段
+        if ret['children'] is None:
+            ret.pop('children', None)
+
+        # 处理按钮类型(不需要作为路由)
+        if instance.type == 2:  # 假设2是按钮类型
+            return None
+
+        return ret
 
 
 class UserDetailSerializer(serializers.ModelSerializer):

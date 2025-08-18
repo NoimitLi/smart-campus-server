@@ -36,6 +36,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',  # 跨域
+    'drf_yasg',  # 生成接口文档
+    'rest_framework',
     "adminServer.apps.AdminserverConfig",
     "StudentServer.apps.StudentserverConfig",
     "authSystem.apps.AuthsystemConfig"
@@ -43,6 +46,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
@@ -149,5 +153,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'  # 访问媒体文件的 URL 前缀
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # 本地存储路径
 
-
 # APPEND_SLASH = False  # 关闭自动追加斜杠
+
+CORS_ORIGIN_ALLOW_ALL = True
+# CORS_ORIGIN_WHITELIST = [
+# 'https://example.com',
+# 'https://example.org',
+# ]

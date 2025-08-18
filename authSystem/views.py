@@ -76,7 +76,7 @@ class LoginView(APIView):
                 httponly=True,
                 secure=request.is_secure(),  # 生产环境应为True
                 samesite='Lax',
-                path='/auth/refresh'  # 限制Cookie只发送到刷新接口
+                path='/api/auth/refresh'  # 限制Cookie只发送到刷新接口
             )
 
             return response
@@ -91,6 +91,7 @@ class TokenRefreshView(APIView):
     def post(self, request, *args, **kwargs):
         try:
             refresh_token = request.COOKIES.get('refresh_token')
+            print(request.COOKIES)
             if not refresh_token:
                 raise AuthFailed('缺少Refresh Token')
 
