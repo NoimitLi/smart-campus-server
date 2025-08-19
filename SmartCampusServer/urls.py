@@ -47,6 +47,7 @@ urlpatterns = [
     path('api/auth/', include('authSystem.urls')),  # 两端的认证系统
     path('api/as/', include('adminServer.urls')),  # adminServer的URL配置
     path('api/ss/', include('StudentServer.urls')),  # StudentServer的URL配置
+    path('api/info/', include('scrapyServer.urls')),  # TeacherServer的URL配置
 ]
 
 if settings.DEBUG:

@@ -4,7 +4,8 @@ from django.core.cache import cache
 from rest_framework import status
 from utils.token import verify_token
 
-WHITE_LIST = ['/auth/login', '/auth/register', '/auth/send_code', '/auth/refresh', '/media', '/swagger', '/redoc']
+WHITE_LIST = ['/auth/login', '/auth/register', '/auth/send_code', '/auth/refresh', '/media', '/swagger', '/redoc',
+              '/test']
 
 
 class TokenAuthMiddleware(MiddlewareMixin):

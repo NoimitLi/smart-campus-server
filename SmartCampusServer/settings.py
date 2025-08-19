@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     "adminServer.apps.AdminserverConfig",
     "StudentServer.apps.StudentserverConfig",
     "authSystem.apps.AuthsystemConfig",
-    "socketServer.apps.SocketserverConfig"
+    "socketServer.apps.SocketserverConfig",
+    "scrapyServer.apps.ScrapyserverConfig"
 ]
 
 MIDDLEWARE = [
