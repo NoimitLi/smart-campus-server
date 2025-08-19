@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from authSystem.models import RoleModel, UserModel
 from .models import DepartmentModel
 from Base.Response import APIResponse
@@ -205,7 +205,7 @@ class UserViewSet(viewsets.ViewSet):
     # 分页
     pagination_class = CustomPagination
     # 文件解析器
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     # 认证
     # authentication_classes =
@@ -304,7 +304,8 @@ class UserViewSet(viewsets.ViewSet):
             return APIResponse(msg="无权限修改管理员", status=status.HTTP_403_FORBIDDEN)
         # 只更新状态字段
         # partial=True 将所有反序列化字段设置为False
-        serializer = UserSerializer(user, data={'status': request.data.get('status')}, partial=True)
+        serializer = UserSerializer(user, data={'status': request.data.get('status')}, partial=True,
+                                    context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return APIResponse(serializer.data)
@@ -321,7 +322,7 @@ class UserViewSet(viewsets.ViewSet):
             return APIResponse(msg="用户不存在", status=status.HTTP_404_NOT_FOUND)
         # 只更新状态字段
         # partial=True 将所有反序列化字段设置为False
-        serializer = UserSerializer(user, data=request.data, partial=True)
+        serializer = UserSerializer(user, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return APIResponse(serializer.data)

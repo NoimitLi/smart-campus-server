@@ -207,11 +207,11 @@ class UserSerializer(serializers.ModelSerializer):
         if 'password' not in validated_data:
             validated_data.pop('password', None)
         else:
-            register = RegisterSerializer(data=validated_data)
-            try:
-                register.validate_confirm_password(validated_data.get('confirm_password'))
-            except serializers.ValidationError as e:
-                raise e
+            # register = RegisterSerializer(data=validated_data)
+            # try:
+            #     register.validate_confirm_password(validated_data.get('confirm_password'))
+            # except serializers.ValidationError as e:
+            #     raise e
             validated_data['password'] = aes_helper.aes_encrypt(validated_data.get('password', '123456'))
         validated_data.pop('last_login_time', None)
 
@@ -245,13 +245,13 @@ class UserSerializer(serializers.ModelSerializer):
         """hook获取data前的操作"""
         ret = super().to_representation(instance)
         # 将avatar转为完整的url
-        # if ret['avatar']:
-            # ret['avatar'] = self.context['request'].build_absolute_uri(ret['avatar'])
+        # if ret.get('avatar'):
+        # ret['avatar'] = self.context['request'].build_absolute_uri(ret['avatar'])
         ret['avatar'] = {
-            'showAvatar': self.context['request'].build_absolute_uri(ret['avatar']) or None,
-            'fillAvatar': self.context['request'].build_absolute_uri(ret['avatar']) or None
+            'showAvatar': self.context['request'].build_absolute_uri(ret.get('avatar')) or None,
+            'fillAvatar': self.context['request'].build_absolute_uri(ret.get('avatar')) or None
         }
-        if ret['status']:
+        if ret.get('status'):
             ret['status'] = 1 if ret['status'] else 0
         return ret
 
