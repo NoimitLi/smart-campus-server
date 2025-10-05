@@ -1,20 +1,21 @@
+from rest_framework import status as http_status
 from rest_framework.response import Response
 
 
 class APIResponse(Response):
-    def __init__(self, data=None, code=200, msg='success', **kwargs):
-        if 'status' in kwargs:
-            code = kwargs.get('status')
-            if kwargs.get('status') == 404 and msg == 'success':
-                msg = 'Not Found'
-
-        response_data = {
-            'code': code,
-            'message': msg,
+    def __init__(self, data=None, message='success', status=http_status.HTTP_200_OK, **kwargs):
+        response = {
+            'code': status,
+            'message': message,
         }
         if data:
-            # if isinstance(data, dict):
-            #     response_data.update(data)
-            # else:
-            response_data['data'] = data
-        super().__init__(data=response_data, **kwargs)
+            response['data'] = data
+        super().__init__(response, status=status, **kwargs)
+
+    @classmethod
+    def success(cls, data=None, message=None, **kwargs):
+        return cls(data=data, message=message, **kwargs)
+
+    @classmethod
+    def fail(cls, message=None, code=http_status.HTTP_400_BAD_REQUEST, **kwargs):
+        return cls(message=message, status=code, **kwargs)
