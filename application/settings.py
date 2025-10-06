@@ -44,10 +44,15 @@ INSTALLED_APPS = [
     'rest_framework',
     'channels',  # websocket服务
 
-    "apps.userManage",
-    "apps.oauth",
-    "apps.socketServer",
-    "apps.scrapyServer"
+    "apps.userManage",  # 用户管理
+    "apps.oauth",  # 权限
+    "apps.socketServer",  # websocket服务
+    "apps.scrapyServer",  # 爬虫服务
+    "apps.academicManagement",  # 教务管理
+    "apps.studentServer",  # 学生服务
+    "apps.logisticalSupport",  # 后勤保障
+    "apps.campusServices",  # 校园服务
+    "apps.systemMonitoring",  # 系统监控
 ]
 
 MIDDLEWARE = [
@@ -144,7 +149,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # 配置自定义认证，不使用django的默认auth_user表
 AUTHENTICATION_BACKENDS = [
     # 'django.contrib.auth.backends.ModelBackend',  # 默认的认证后端
-    'oauth.backends.CustomAuthBackend',  # 自定义的认证后端
+    'apps.oauth.backends.CustomAuthBackend',  # 自定义的认证后端
 ]
 
 # Internationalization

@@ -35,7 +35,6 @@ schema_view = get_schema_view(
     public=True,
     permission_classes=[permissions.AllowAny],  # 允许任何人访问文档
 )
-
 urlpatterns = [
     # 文档 JSON/YAML 下载
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
@@ -43,10 +42,10 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     # ReDoc 页面
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    path('api/admin/', admin.site.urls),
+    # path('api/admin/', admin.site.urls),
     path('api/auth/', include('apps.oauth.urls')),  # 两端的认证系统
     path('api/as/', include('apps.userManage.urls')),  # adminServer的URL配置
-    path('api/info/', include('apps.scrapyServer.urls')),  # TeacherServer的URL配置
+    path('api/publicOpinion/', include('apps.scrapyServer.urls')),  # scrapyServer的URL配置
 ]
 
 if settings.DEBUG:
