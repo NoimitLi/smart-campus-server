@@ -24,7 +24,7 @@ class UserModel(BaseModel):
     password = models.CharField(max_length=255, verbose_name="密码")
     nickname = models.CharField(max_length=50, verbose_name="昵称")
     avatar = models.ImageField(upload_to='avatars/%Y/%m/%d/', verbose_name="头像", null=True,
-                               default='avatars/default.png')
+                               default='avatars/0001/01/01/default.png')
     phone = models.CharField(max_length=11, verbose_name="手机号", null=False)
     email = models.EmailField(max_length=32, verbose_name="邮箱", null=False)
     description = models.TextField(verbose_name="个人简介", null=False)

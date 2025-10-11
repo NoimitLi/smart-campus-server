@@ -3,13 +3,15 @@ from rest_framework.response import Response
 
 
 class APIResponse(Response):
-    def __init__(self, data=None, message='success', status=http_status.HTTP_200_OK, **kwargs):
+    def __init__(self, data=None, message='success', code=None, status=http_status.HTTP_200_OK, **kwargs):
         response = {
             'code': status,
             'message': message,
         }
         if data:
             response['data'] = data
+        if kwargs.get('errors'):
+            response['errors'] = kwargs.pop('errors')
         super().__init__(response, status=status, **kwargs)
 
     @classmethod

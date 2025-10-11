@@ -96,15 +96,15 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
         'NAME': 'smart_campus_system',  # 数据库名称
-        'HOST': '192.168.72.129',  # 数据库地址
-        'PORT': 3307,  # 数据库端口
-        'USER': 'root',  # 数据库用户名
-        'PASSWORD': '123456',  # 数据库密码
+        'HOST': '47.118.17.9',  # 数据库地址
+        'PORT': 3306,  # 数据库端口
+        'USER': 'campus1',  # 数据库用户名
+        'PASSWORD': '@Campus1234',  # 数据库密码
     }
 }
 # 配置redis缓存
 # Redis的基本配置
-REDIS_HOST = '192.168.72.129'
+REDIS_HOST = '47.118.17.9'
 REDIS_PORT = 6379
 REDIS_DB = 0
 # 配置Django缓存后端为Redis

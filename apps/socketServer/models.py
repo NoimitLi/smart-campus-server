@@ -1,6 +1,5 @@
 from django.db import models
 from apps.oauth.models import UserModel
-from django.contrib.auth import get_user_model
 
 
 class ChatRoom(models.Model):

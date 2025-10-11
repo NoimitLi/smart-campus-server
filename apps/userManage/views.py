@@ -4,14 +4,8 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from apps.oauth.models import RoleModel, UserModel
 from .models import DepartmentModel
 from Base.Response import APIResponse
-from Base.Pagination import CustomPagination
 from Base.ViewSet import APIViewSet
 from .serializers import RoleSerializer, DepartmentSerializer, UserSerializer
-from django.db import models
-
-
-class BaseViewSet(viewsets.ViewSet):
-    pass
 
 
 class RoleViewSet(APIViewSet):
