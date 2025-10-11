@@ -50,7 +50,7 @@ urlpatterns = [
     path('api/academic/', include('apps.academicManagement.urls')),  # 教务管理
     path('api/studentServer/', include('apps.studentServer.urls')),  # 学生服务
     path('api/logistics/', include('apps.logisticalSupport.urls')),  # 后勤保障
-    # path('api/campusServices/', include('apps.campusServices.urls')),  # 校园服务
+    path('api/campusServices/', include('apps.campusServices.urls')),  # 校园服务
 ]
 
 if settings.DEBUG:
