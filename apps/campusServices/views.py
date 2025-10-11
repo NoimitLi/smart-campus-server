@@ -30,5 +30,5 @@ class NotificationViewSet(APIViewSet):
 
 class WifiHotspotViewSet(APIViewSet):
     """网络服务"""
-    WifiHotspot.objects.all()
+    queryset = WifiHotspot.objects.all()
     serializer_class = WifiHotspotSerializer
