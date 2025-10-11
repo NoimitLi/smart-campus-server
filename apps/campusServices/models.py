@@ -83,7 +83,6 @@ class SportPlace(BaseModel):
     type = models.CharField(max_length=64, verbose_name='运动类型')
     open_time = models.CharField(max_length=64, verbose_name='开放时间', null=True, blank=True)
     status = models.CharField(max_length=16, verbose_name='状态', default='open')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
 
     class Meta:
         db_table = 'cp_sport_place'

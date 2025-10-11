@@ -158,8 +158,7 @@ class Schedule(BaseModel):
 
     id = models.AutoField(primary_key=True, verbose_name="课程表ID")
     course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name="课程")
-    teacher = models.ForeignKey(UserRoleModel, on_delete=models.CASCADE, verbose_name="教师",
-                                limit_choices_to={'role_id': 2})  # 限制只能选择教师角色
+    teacher = models.ForeignKey(UserModel, on_delete=models.CASCADE, verbose_name="教师")  # 限制只能选择教师角色
     classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, verbose_name="教室")
     week_day = models.IntegerField(choices=WEEK_DAY_CHOICES, verbose_name="星期几")
     start_time = models.TimeField(verbose_name="开始时间")
@@ -198,8 +197,7 @@ class Exam(BaseModel):
     classroom = models.ForeignKey(Classroom, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="考场")
     exam_type = models.CharField(max_length=32, choices=EXAM_TYPE_CHOICES, default='final', verbose_name="考试类型")
     duration = models.IntegerField(default=120, verbose_name="考试时长(分钟)")
-    supervisor = models.ForeignKey(UserRoleModel, on_delete=models.SET_NULL, null=True, blank=True,
-                                   limit_choices_to={'role_id': 2}, verbose_name="监考老师")
+    supervisor = models.ForeignKey(UserModel, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="监考老师")
     remark = models.TextField(null=True, blank=True, verbose_name="备注")
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
@@ -219,8 +217,7 @@ class CourseTeacher(BaseModel):
     """课程教师关联表"""
     id = models.AutoField(primary_key=True, verbose_name="ID")
     course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name="课程")
-    teacher = models.ForeignKey(UserRoleModel, on_delete=models.CASCADE, verbose_name="教师",
-                                limit_choices_to={'role_id': 2})
+    teacher = models.ForeignKey(UserModel, on_delete=models.CASCADE, verbose_name="教师")
     role = models.CharField(max_length=32, default='主讲教师', verbose_name="角色")  # 主讲教师/辅导教师
     update_time = models.DateTimeField(auto_now=True, verbose_name="更新时间")
 
@@ -241,8 +238,7 @@ class StudentCourse(BaseModel):
     )
 
     id = models.AutoField(primary_key=True, verbose_name="ID")
-    student = models.ForeignKey(UserRoleModel, on_delete=models.CASCADE, verbose_name="学生",
-                                limit_choices_to={'role_id': 3})
+    student = models.ForeignKey(UserModel, on_delete=models.CASCADE, verbose_name="学生")
     course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name="课程")
     semester = models.CharField(max_length=32, verbose_name="学期")
     select_time = models.DateTimeField(auto_now_add=True, verbose_name="选课时间")
